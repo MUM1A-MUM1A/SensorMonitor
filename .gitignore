@@ -1,0 +1,27 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.pkl
+
+# Базы данных
+*.db
+*.db-shm
+*.db-wal
+
+# Секреты
+.env
+license.key
+
+# IDE
+.idea/
+*.log
