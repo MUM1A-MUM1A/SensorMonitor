@@ -1,82 +1,77 @@
 ﻿using SensorMonitor.Core.Models;
 using SensorMonitor.Core.Services;
 
-Console.WriteLine("Тест базы данных\n");
+Console.WriteLine("Тест симулятора + БД \n");
 
-// 1. Убеждаемся, что БД создана
+// 1. Создаём симулятор и БД
+var simulator = new SensorSimulator(intervalMs: 1000, sensorId: "sensor-01");
+
 using (var db = new AppDbContext())
 {
     db.Database.EnsureCreated();
-    Console.WriteLine("[OK] База данных готова.");
 }
 
-// 2. Записываем несколько показаний
-using (var db = new AppDbContext())
+Console.WriteLine(" Симулятор и БД готовы.\n");
+
+// 2. Читаем 10 показаний и сохраняем в БД
+var cts = new CancellationTokenSource();
+int counter = 0;
+
+try
 {
-    var readings = new[]
+    await foreach (var reading in simulator.StreamAsync(cts.Token))
     {
-        new SensorReading
+        counter++;
+
+        Console.WriteLine(
+            $"[{counter:D2}] {reading.SensorId} | " +
+            $"T={reading.Temperature:F2}°C | " +
+            $"H={reading.Humidity:F2}% | " +
+            $"V={reading.Vibration:F3}");
+
+        using (var db = new AppDbContext())
         {
-            SensorId = "sensor-01",
-            Temperature = 25.4,
-            Humidity = 48.2,
-            Vibration = 0.32
-        },
-        new SensorReading
-        {
-            SensorId = "sensor-01",
-            Temperature = 27.1,
-            Humidity = 51.5,
-            Vibration = 0.45,
-            PredictedRisk = 0.15,
-            PredictedStatus = SensorStatus.Ok
-        },
-        new SensorReading
-        {
-            SensorId = "sensor-02",
-            Temperature = 31.8,
-            Humidity = 68.0,
-            Vibration = 0.81,
-            PredictedRisk = 0.87,
-            PredictedStatus = SensorStatus.Critical
+            db.Readings.Add(reading);
+            await db.SaveChangesAsync();
         }
-    };
 
-    db.Readings.AddRange(readings);
-    db.SaveChanges();
-
-    Console.WriteLine($"[OK] Добавлено записей: {readings.Length}\n");
+        // Переключаем режимы для демонстрации
+        if (counter == 3)
+        {
+            Console.WriteLine("\nПереключение в режим DEGRADING\n");
+            simulator.Mode = SimulationMode.Degrading;
+        }
+        else if (counter == 7)
+        {
+            Console.WriteLine("\nПереключение в режим CRITICAL\n");
+            simulator.Mode = SimulationMode.Critical;
+        }
+        else if (counter == 10)
+        {
+            Console.WriteLine("\n Стоп. Показаний достаточно.\n");
+            cts.Cancel();
+            break;
+        }
+    }
+}
+catch (OperationCanceledException)
+{
+    // Ожидаемое завершение
 }
 
-// 3. Читаем обратно
+// 3. Проверяем, что всё сохранилось
 using (var db = new AppDbContext())
 {
-    var all = db.Readings
-        .OrderByDescending(r => r.Timestamp)
-        .ToList();
+    var total = db.Readings.Count();
+    var last = db.Readings.OrderByDescending(r => r.Id).FirstOrDefault();
 
-    Console.WriteLine($"=== Всего записей в БД: {all.Count} ===\n");
-
-    foreach (var r in all)
+    Console.WriteLine($" Всего записей в БД: {total}");
+    if (last != null)
     {
         Console.WriteLine(
-            $"ID={r.Id} | {r.SensorId} | " +
-            $"T={r.Temperature:F1}°C | H={r.Humidity:F1}% | V={r.Vibration:F2} | " +
-            $"Risk={r.PredictedRisk?.ToString("P0") ?? "—"} | " +
-            $"Status={r.PredictedStatus?.ToString() ?? "—"}");
+            $"Последняя: T={last.Temperature:F2}°C, " +
+            $"H={last.Humidity:F2}%, V={last.Vibration:F3}");
     }
-
-    Console.WriteLine();
-}
-
-// 4. Фильтрация
-using (var db = new AppDbContext())
-{
-    var critical = db.Readings
-        .Where(r => r.PredictedStatus == SensorStatus.Critical)
-        .ToList();
-
-    Console.WriteLine($"[OK] Критических показаний: {critical.Count}");
 }
 
 Console.WriteLine("\nТест завершён");
