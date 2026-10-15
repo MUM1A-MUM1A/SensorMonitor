@@ -8,6 +8,13 @@ var simulator = new SensorSimulator(intervalMs: 1000, sensorId: "sensor-01");
 
 using (var db = new AppDbContext())
 {
+    db.Database.EnsureDeleted();   // ← удалить всё
+    db.Database.EnsureCreated();
+    Console.WriteLine("БД пересоздана.\n");
+}
+
+using (var db = new AppDbContext())
+{
     db.Database.EnsureCreated();
 }
 
