@@ -1,0 +1,7 @@
+System.MissingFieldException: Field not found: 'Avalonia.Input.Gestures.PinchEvent'.
+   at LiveChartsCore.SkiaSharpView.Avalonia.CartesianChart..ctor()
+   at SensorMonitor.App.Views.MainWindow.!XamlIlPopulate(IServiceProvider, MainWindow) in C:\Projects\SensorMonitor\src\SensorMonitor.App\Views/MainWindow.axaml:line 70
+   at SensorMonitor.App.Views.MainWindow.!XamlIlPopulateTrampoline(MainWindow)
+   at SensorMonitor.App.Views.MainWindow.InitializeComponent(Boolean loadXaml) in C:\Projects\SensorMonitor\src\SensorMonitor.App\obj\Debug\net9.0\Avalonia.Generators\Avalonia.Generators.NameGenerator.AvaloniaNameIncrementalGenerator\SensorMonitor.App.Views.MainWindow.g.cs:line 24
+   at SensorMonitor.App.Views.MainWindow..ctor() in C:\Projects\SensorMonitor\src\SensorMonitor.App\Views\MainWindow.axaml.cs:line 9
+   at SensorMonitor.App.App.OnFrameworkInitializationCompleted() in C:\Projects\SensorMonitor\src\SensorMonitor.App\App.axaml.cs:line 30

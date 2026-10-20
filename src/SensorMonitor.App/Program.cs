@@ -1,24 +1,32 @@
 ﻿using Avalonia;
 using System;
+using System.IO;
 
 namespace SensorMonitor.App;
 
-sealed class Program
+class Program
 {
-    // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception ex)
+        {
+            // Если приложение падает, запишем ошибку прямо в консоль и в файл
+            Console.WriteLine("=========================================");
+            Console.WriteLine("ПРИЛОЖЕНИЕ УПАЛО С ОШИБКОЙ:");
+            Console.WriteLine(ex.ToString());
+            Console.WriteLine("=========================================");
+            
+            File.WriteAllText("crash.log", ex.ToString());
+        }
+    }
 
-    // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-#if DEBUG
-            .WithDeveloperTools()
-#endif
-            .WithInterFont()
             .LogToTrace();
 }
